@@ -42,6 +42,10 @@ gerenciamento do Azure. Ligue/desligue a VM pelo
 ## Início rápido — MacBook (macOS)
 
 ```bash
+# Clone com o URL correto e entre na branch dos scripts (até o merge na main)
+git clone https://github.com/hebertpaes/openclaw.git
+cd openclaw && git checkout claude/vigilant-hamilton-ig74tu
+
 cp /caminho/CLAW.REZ ~/Downloads/
 ./mac/setup.sh --run  # dependências (Homebrew) + build + organiza assets + roda
 ```

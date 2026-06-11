@@ -37,10 +37,16 @@ written for the system `bash` that ships with macOS.
 ## Quick start
 
 ```bash
-git clone <this-repo> openclaw && cd openclaw
-# put your CLAW.REZ where the script will find it
+# 1. Clone this repo on the Mac (correct URL)
+git clone https://github.com/hebertpaes/openclaw.git
+cd openclaw
+# Until the PR is merged into main, check out the branch with the scripts:
+git checkout claude/vigilant-hamilton-ig74tu
+
+# 2. Put your CLAW.REZ where the script will find it
 cp /path/to/CLAW.REZ ~/Downloads/
 
+# 3. Build + run
 ./mac/setup.sh        # deps + build + organize assets
 ./mac/run.sh          # play
 ```
