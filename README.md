@@ -12,6 +12,8 @@ Automação para implantar e executar o motor de jogo
   - `build.sh`: clona e compila o OpenClaw
   - `organize-assets.sh`: **organiza a pasta de download** (coloca o `CLAW.REZ`
     no lugar e gera o `ASSETS.ZIP`)
+  - `clean-downloads.sh`: remove arquivos `.dmg` inúteis (imagens macOS) da
+    pasta de download
   - `run.sh`: **ativa o OpenClaw** (display virtual + VNC para acesso remoto)
   - `install-service.sh`: registra como serviço `systemd`
   - `README.md`: guia completo de implantação

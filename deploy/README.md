@@ -19,6 +19,7 @@ engine (a reimplementation of *Captain Claw*, 1997) on the
 | `install-deps.sh` | Installs the SDL2 build stack, MIDI audio, and Xvfb/VNC (`apt`). |
 | `build.sh` | Clones + compiles OpenClaw → `Build_Release/openclaw`. |
 | `organize-assets.sh` | **Organizes the download folder**: finds `CLAW.REZ`, drops it next to the binary, and packs `ASSETS.ZIP`. |
+| `clean-downloads.sh` | Removes unusable `.dmg` files (macOS images, useless on Linux) from the download folder. |
 | `run.sh` | **Activates OpenClaw**: launches it on a virtual display (Xvfb), optionally over VNC. |
 | `install-service.sh` | Installs a `systemd` unit so the game runs on boot / restarts on failure. |
 | `setup.sh` | Runs deps → build → organize in one go (`--service`, `--run` optional). |
@@ -95,6 +96,21 @@ The service runs `run.sh --headless`, so Xvfb (and VNC on localhost) come up
 automatically. Tunnel in with the same `ssh -L` command above to watch it.
 
 ---
+
+## Cleaning the download folder
+
+`.dmg` files are macOS disk images and are unusable on the Linux VM. Remove
+them from `DOWNLOADS_DIR` with:
+
+```bash
+./deploy/clean-downloads.sh --dry-run   # preview what would be deleted
+./deploy/clean-downloads.sh             # list, then confirm before deleting
+./deploy/clean-downloads.sh --yes       # delete without prompting
+```
+
+It targets only `*.dmg` (recursively), so usable assets like `CLAW.REZ` are
+left untouched. Deletion is irreversible — it asks before removing anything
+unless you pass `--yes`.
 
 ## Configuration
 
