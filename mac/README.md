@@ -1,11 +1,11 @@
-# Running OpenClaw on the MacBook
+# Running the OpenClaw AI gateway on the MacBook
 
-Automation to build and run the [OpenClaw](https://github.com/pjasicek/OpenClaw)
-engine (a reimplementation of *Captain Claw*, 1997) **locally on macOS** — as an
-alternative to the Azure VM (see [`../deploy/`](../deploy/) for the VM path).
+Automation to install and run the [OpenClaw](https://github.com/openclaw/openclaw)
+AI assistant gateway (🦞 — <https://openclaw.ai>) **locally on macOS**, so the
+same agent runs on your Mac as on the [Azure VM](../deploy/).
 
-Works on **Apple Silicon (M1/M2/M3…)** and **Intel** Macs. The scripts are
-written for the system `bash` that ships with macOS.
+Works on **Apple Silicon** and **Intel**. The gateway listens on **port 18789**
+(`http://localhost:18789`).
 
 ---
 
@@ -13,83 +13,74 @@ written for the system `bash` that ships with macOS.
 
 | Script | Purpose |
 | --- | --- |
-| `config.sh` | Tunables (paths, repo). Edit here or override via env vars. |
-| `install-deps.sh` | Installs the SDL2 build stack via **Homebrew**. |
-| `build.sh` | Clones + compiles OpenClaw → `Build_Release/openclaw` (auto-detects brew prefix + CPU arch). |
-| `organize-assets.sh` | Finds `CLAW.REZ` in your downloads, places it, and packs `ASSETS.ZIP`. |
-| `run.sh` | Launches the game in its own window (native display — no VNC needed). |
-| `setup.sh` | Runs deps → build → organize in one go (`--run` optional). |
+| `config.sh` | Tunables: model, port, Node formula. |
+| `install.sh` | Installs Node + `openclaw` globally via **Homebrew**/npm. |
+| `configure.sh` | Scaffolds `~/.openclaw/openclaw.json` with the Claude model (no secrets). |
+| `start.sh` | Runs `openclaw onboard --install-daemon` (launchd) and shows status. |
+| `setup.sh` | install → configure → start, in one go. |
 
 ---
 
 ## Prerequisites
 
-1. **Homebrew** — install from <https://brew.sh> if you don't have it. The
-   scripts check for it and stop with instructions if it's missing.
-2. **Xcode Command Line Tools** — `xcode-select --install` (provides the
-   compiler/`make`).
-3. **The original `CLAW.REZ`** from a legitimate copy of *Captain Claw*. It's
-   copyrighted and **not redistributable**, so it's not included — supply your
-   own and drop it in `~/Downloads`.
+1. **Homebrew** — <https://brew.sh> (the scripts check for it).
+2. **An Anthropic API key** for Claude — exported as `ANTHROPIC_API_KEY`
+   (never written to the repo or config).
 
 ---
 
 ## Quick start
 
 ```bash
-# 1. Clone this repo on the Mac (correct URL)
 git clone https://github.com/hebertpaes/openclaw.git
-cd openclaw
-# Until the PR is merged into main, check out the branch with the scripts:
-git checkout claude/vigilant-hamilton-ig74tu
+cd openclaw && git checkout claude/vigilant-hamilton-ig74tu   # until merged to main
 
-# 2. Put your CLAW.REZ where the script will find it
-cp /path/to/CLAW.REZ ~/Downloads/
-
-# 3. Build + run
-./mac/setup.sh        # deps + build + organize assets
-./mac/run.sh          # play
+export ANTHROPIC_API_KEY=sk-ant-...
+./mac/setup.sh
 ```
 
-Or do it in one line: `./mac/setup.sh --run`.
+`setup.sh` installs Node + OpenClaw, writes the config, then runs
+`openclaw onboard --install-daemon`. Onboarding is **interactive the first
+time** (provider/channel setup) and installs a launchd service so the gateway
+runs in the background.
 
----
+Open the dashboard at **<http://localhost:18789>**.
 
-## Step by step (if you prefer)
+Manage it:
 
 ```bash
-./mac/install-deps.sh      # brew install cmake sdl2 sdl2_image sdl2_mixer sdl2_ttf sdl2_gfx tinyxml timidity
-./mac/build.sh             # clone + cmake + make
-./mac/organize-assets.sh   # place CLAW.REZ + build ASSETS.ZIP
-./mac/run.sh               # launch
+openclaw gateway status
+openclaw gateway stop
 ```
 
 ---
 
-## Configuration
+## Choosing the Claude model
 
-Override any value from `config.sh` inline:
+`configure.sh` writes `~/.openclaw/openclaw.json` with
+`"model": "anthropic/claude-sonnet-4-6"`. Override with
+`OPENCLAW_MODEL=anthropic/<model-id> ./mac/setup.sh`; confirm the exact id in the
+[docs](https://docs.openclaw.ai).
+
+---
+
+## Step by step
 
 ```bash
-OPENCLAW_HOME=~/Games/OpenClaw DOWNLOADS_DIR=~/claw ./mac/setup.sh
+./mac/install.sh        # brew node + npm i -g openclaw
+./mac/configure.sh      # ~/.openclaw/openclaw.json
+./mac/start.sh          # onboard + install daemon
+# or: ./mac/start.sh --foreground
 ```
-
-Common knobs: `OPENCLAW_REPO` / `OPENCLAW_BRANCH`, `OPENCLAW_HOME`,
-`DOWNLOADS_DIR`, `MAKE_JOBS`.
 
 ---
 
 ## Troubleshooting
 
-- **`Homebrew is not installed`** — install it from <https://brew.sh>, then
-  re-run.
-- **Linker / SDL2 errors on Apple Silicon** — `build.sh` already passes
-  `-DCMAKE_PREFIX_PATH=$(brew --prefix)` and `-DCMAKE_OSX_ARCHITECTURES=$(uname -m)`.
-  If problems persist, make sure brew itself is the native-arch install
-  (`which brew` → `/opt/homebrew/bin/brew` on Apple Silicon).
-- **`Could not find CLAW.REZ`** — drop the file into `~/Downloads` (or set
-  `DOWNLOADS_DIR`) and re-run `./mac/organize-assets.sh`.
-- **No music** — install/verify `timidity` (`brew install timidity`); gameplay
-  is unaffected if it's missing.
-- **"These scripts target macOS"** — you're not on a Mac; use
-  [`../deploy/`](../deploy/) for the Linux Azure VM instead.
+- **`Homebrew is not installed`** — install from <https://brew.sh>, then re-run.
+- **`node` not on PATH after install** — for a versioned formula add
+  `export PATH="$(brew --prefix)/opt/node@24/bin:$PATH"` to `~/.zshrc`.
+- **`ANTHROPIC_API_KEY is not set`** — export it, or let `openclaw onboard`
+  prompt you.
+- **"These scripts target macOS"** — you're not on a Mac; use [`../deploy/`](../deploy/)
+  for the Azure VM.

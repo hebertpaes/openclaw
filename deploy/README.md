@@ -1,13 +1,15 @@
-# Deploying OpenClaw on the Azure VM
+# Deploying the OpenClaw AI gateway on the Azure VM
 
-Automation to build and run the [OpenClaw](https://github.com/pjasicek/OpenClaw)
-engine (a reimplementation of *Captain Claw*, 1997) on the
+Automation to install and run the [OpenClaw](https://github.com/openclaw/openclaw)
+AI assistant gateway (the 🦞 self-hosted agent — <https://openclaw.ai>) on the
 **`openclaw-vm`** Azure virtual machine.
 
-> **Target VM:** `openclaw-vm` (resource group `openclaw-vm_group`,
-> subscription `de047b31-…`). These scripts assume a **Debian/Ubuntu** Linux
-> VM, which is the Azure default. They do **not** talk to the Azure control
-> plane — you run them *on* the VM over SSH.
+> **Target VM:** `openclaw-vm` (resource group `openclaw-vm_group`). These
+> scripts assume a **Debian/Ubuntu** VM (the Azure default) and run *on* the VM
+> over SSH — they don't talk to the Azure control plane.
+
+The gateway is a Node app that listens on **port 18789** (the local
+dashboard/API) and bridges your chat apps to a Claude agent.
 
 ---
 
@@ -15,157 +17,117 @@ engine (a reimplementation of *Captain Claw*, 1997) on the
 
 | Script | Purpose |
 | --- | --- |
-| `config.env` | All tunables (paths, repo, display, VNC port). Edit here or override via env vars. |
-| `install-deps.sh` | Installs the SDL2 build stack, MIDI audio, and Xvfb/VNC (`apt`). |
-| `build.sh` | Clones + compiles OpenClaw → `Build_Release/openclaw`. |
-| `organize-assets.sh` | **Organizes the download folder**: finds `CLAW.REZ`, drops it next to the binary, and packs `ASSETS.ZIP`. |
-| `clean-downloads.sh` | Removes unusable `.dmg` files (macOS images, useless on Linux) from the download folder. |
-| `run.sh` | **Activates OpenClaw**: launches it on a virtual display (Xvfb), prints the VM's local IP, and serves VNC (localhost or, with `VNC_EXPOSE=1`, the VM's IP). |
-| `connect.sh` | Run **on your Mac**: opens the SSH tunnel to the VM (`VM_HOST`) and prints the `vnc://localhost:5900` URL. |
-| `install-service.sh` | Installs a `systemd` unit so the game runs on boot / restarts on failure. |
-| `setup.sh` | Runs deps → build → organize in one go (`--service`, `--run` optional). |
+| `config.env` | Tunables: model, port, Node version, `VM_HOST`. |
+| `install.sh` | Installs Node (via NodeSource) + `npm i -g openclaw@latest`. |
+| `configure.sh` | Scaffolds `~/.openclaw/openclaw.json` with the Claude model (no secrets). |
+| `start.sh` | Runs `openclaw onboard --install-daemon` (systemd user service) and shows status. |
+| `connect.sh` | Run **on your Mac**: SSH-tunnels the dashboard and prints `http://localhost:18789`. |
+| `setup.sh` | install → configure → start, in one go. |
 
 ---
 
 ## Prerequisites
 
 1. **A running Ubuntu/Debian Azure VM.** In the [Azure Portal](https://portal.azure.com/#@abacs.org.br/resource/subscriptions/de047b31-2275-439a-a162-5596f80161cb/resourceGroups/openclaw-vm_group/providers/Microsoft.Compute/virtualMachines/openclaw-vm/overview),
-   make sure `openclaw-vm` shows **Running** (Start it if not), and note its
-   public IP / DNS name. *(This must be done by you in the portal — these
-   scripts can't power the VM on.)*
-2. **SSH access** to the VM (`ssh azureuser@<vm-ip>`).
-3. **The original `CLAW.REZ`** from a legitimate copy of *Captain Claw*. It is
-   copyrighted and **not redistributable**, so it is not included here — you
-   must supply it.
+   make sure `openclaw-vm` is **Running** and note its public IP. *(You do this
+   in the portal — the scripts can't power the VM on.)*
+2. **SSH access** (`ssh azureuser@<vm-ip>`).
+3. **An Anthropic API key** for Claude. Export it as `ANTHROPIC_API_KEY` — it is
+   never written to the repo or the config file.
 
 ---
 
 ## Quick start
 
-From your workstation, copy the repo to the VM and SSH in:
-
 ```bash
-# 1. Get the deploy scripts onto the VM
+# 1. Copy the repo to the VM and SSH in
 scp -r openclaw azureuser@<vm-ip>:~/
-
-# 2. Put your CLAW.REZ where the script will find it (default: ~/Downloads)
-ssh azureuser@<vm-ip> 'mkdir -p ~/Downloads'
-scp /path/to/CLAW.REZ azureuser@<vm-ip>:~/Downloads/
-
-# 3. Build + organize assets in one shot
 ssh azureuser@<vm-ip>
 cd ~/openclaw
+
+# 2. Provide your Claude API key (used by the gateway at runtime)
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# 3. Install + configure + start the daemon
 ./deploy/setup.sh
 ```
 
-Then **activate** the game:
+`setup.sh` installs Node + OpenClaw, writes the config, then runs
+`openclaw onboard --install-daemon`. Onboarding is **interactive the first
+time** — it walks you through the provider/channel (WhatsApp, Telegram, …) and
+installs a systemd **user** service that survives reboots.
+
+Manage it afterwards:
 
 ```bash
-./deploy/run.sh
+openclaw gateway status
+systemctl --user status openclaw     # the daemon unit
+journalctl --user -u openclaw -f     # logs
 ```
 
 ---
 
-## Viewing / playing it remotely (headless VM)
+## Reaching the dashboard from your Mac
 
-The VM has no monitor, so `run.sh` renders to a **virtual display** and exposes
-it over VNC. When it starts, it prints the **VM's local IP** (auto-detected via
-`hostname -I`) and the exact connection command.
-
-### Option A — SSH tunnel (default, recommended, secure)
-
-VNC is **bound to localhost** and you reach it through an SSH tunnel — nothing
-is opened in the Azure Network Security Group. Set `VM_HOST` to your VM's SSH
-target and use the helper:
+The gateway listens on `localhost:18789` on the VM. Reach it through an SSH
+tunnel — nothing is opened in the Azure NSG:
 
 ```bash
-# On your Mac: set the VM address once, then open the tunnel
-export VM_HOST=azureuser@<vm-ip>      # <vm-ip> = public IP from the Azure Portal
-./deploy/connect.sh                   # opens ssh -L 5900:localhost:5900 and prints the URL
-
-# Then connect a VNC client to:
-vnc://localhost:5900                  # on macOS: open vnc://localhost:5900
+# On your Mac:
+export VM_HOST=azureuser@<vm-ip>     # public IP from the Azure Portal
+./deploy/connect.sh                  # opens the tunnel and prints the URL
+# then open  http://localhost:18789
 ```
 
-`./deploy/connect.sh --print` just prints the commands without connecting.
-
-### Option B — VNC on the VM's IP (no tunnel, less secure)
-
-To connect straight to the VM's IP without a tunnel, run the game with VNC
-exposed on the network. This **requires a password** and an **inbound rule for
-the VNC port in the Azure NSG**:
-
-```bash
-VNC_EXPOSE=1 VNC_PASSWORD='choose-a-strong-pass' ./deploy/run.sh
-# run.sh prints:  vnc://<vm-ip>:5900
-```
-
-If `VNC_EXPOSE=1` but no `VNC_PASSWORD` is set, `run.sh` refuses to expose VNC
-and falls back to localhost-only.
-
-To run purely headless (e.g. a smoke test, no viewer): `ENABLE_VNC=0 ./deploy/run.sh`.
+`./deploy/connect.sh --print` shows the command without connecting.
 
 ---
 
-## Run it as a service (starts on boot)
+## Choosing the Claude model
 
-```bash
-sudo ./deploy/install-service.sh   # render + enable the unit
-sudo systemctl start openclaw
-systemctl status openclaw
-journalctl -u openclaw -f          # follow logs
+`configure.sh` writes `~/.openclaw/openclaw.json`:
+
+```json
+{
+  "agent": {
+    "model": "anthropic/claude-sonnet-4-6"
+  }
+}
 ```
 
-The service runs `run.sh --headless`, so Xvfb (and VNC on localhost) come up
-automatically. Tunnel in with the same `ssh -L` command above to watch it.
+Override with `OPENCLAW_MODEL=anthropic/<model-id> ./deploy/setup.sh`. Confirm
+the exact model id your OpenClaw version expects in the
+[docs](https://docs.openclaw.ai).
 
 ---
 
-## Cleaning the download folder
-
-`.dmg` files are macOS disk images and are unusable on the Linux VM. Remove
-them from `DOWNLOADS_DIR` with:
+## Step by step (if you prefer)
 
 ```bash
-./deploy/clean-downloads.sh --dry-run   # preview what would be deleted
-./deploy/clean-downloads.sh             # list, then confirm before deleting
-./deploy/clean-downloads.sh --yes       # delete without prompting
+./deploy/install.sh        # Node + openclaw
+./deploy/configure.sh      # ~/.openclaw/openclaw.json
+./deploy/start.sh          # onboard + install daemon
+# or: ./deploy/start.sh --foreground   # run in the foreground for debugging
 ```
 
-It targets only `*.dmg` (recursively), so usable assets like `CLAW.REZ` are
-left untouched. Deletion is irreversible — it asks before removing anything
-unless you pass `--yes`.
+---
 
-## Configuration
+## Security notes
 
-Override any value in `config.env` inline:
-
-```bash
-OPENCLAW_HOME=/opt/openclaw DOWNLOADS_DIR=/srv/claw SCREEN_GEOMETRY=1920x1080x24 \
-  ./deploy/setup.sh
-```
-
-Common knobs: `OPENCLAW_REPO` / `OPENCLAW_BRANCH`, `OPENCLAW_HOME`,
-`DOWNLOADS_DIR`, `DISPLAY_NUM`, `SCREEN_GEOMETRY`, `ENABLE_VNC`, `VNC_PORT`,
-`MAKE_JOBS`.
-
-Connection / VNC exposure knobs:
-
-| Variable | Purpose |
-| --- | --- |
-| `VM_HOST` | VM SSH target for `connect.sh`, e.g. `azureuser@20.30.40.50`. |
-| `VNC_EXPOSE` | `0` (default) = localhost only (SSH tunnel); `1` = listen on the VM's IP. |
-| `VNC_PASSWORD` | Required when `VNC_EXPOSE=1`; sets the VNC password. |
+- OpenClaw is an autonomous agent that can run shell commands and read/write
+  files. Treat the VM and the API key accordingly.
+- Keep the gateway on `localhost` + SSH tunnel rather than exposing 18789 to the
+  internet. If you must expose it, put it behind auth + TLS and an NSG rule.
+- `ANTHROPIC_API_KEY` is read from the environment; never commit it.
 
 ---
 
 ## Troubleshooting
 
-- **`Could not find CLAW.REZ`** — drop the file into `DOWNLOADS_DIR` (default
-  `~/Downloads`) and re-run `./deploy/organize-assets.sh`.
-- **`openclaw binary not found`** — the build failed; re-run `./deploy/build.sh`
-  and read the `cmake`/`make` output.
-- **Black screen / poor performance over VNC** — expected on CPU-only VMs
-  (software GL rendering). A VM SKU with a GPU improves this.
+- **`ANTHROPIC_API_KEY is not set`** — `export ANTHROPIC_API_KEY=sk-ant-...`
+  before `setup.sh`/`start.sh`, or let `openclaw onboard` prompt you.
 - **`apt-get not found`** — these scripts target Debian/Ubuntu; adapt
-  `install-deps.sh` for other distros.
+  `install.sh` for another distro, or use the Docker install
+  (<https://docs.openclaw.ai/install/docker>).
+- **Node too old** — `install.sh` installs Node `NODE_MAJOR` (default 24) when
+  the system Node is < 22.19.

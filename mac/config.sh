@@ -1,29 +1,26 @@
 # shellcheck shell=bash
 # =============================================================================
-# OpenClaw — macOS (MacBook) configuration
+# OpenClaw AI gateway — macOS (MacBook) configuration
 # -----------------------------------------------------------------------------
-# Edit here, or override any value by exporting it before running a script:
-#
-#     OPENCLAW_HOME=~/Games/OpenClaw ./mac/setup.sh
-#
-# Every value uses ${VAR:-default}, so an exported value always wins.
+# Edit here, or override any value by exporting it before running a script.
+# Docs: https://docs.openclaw.ai  •  Repo: https://github.com/openclaw/openclaw
 # =============================================================================
 
-# --- OpenClaw source -------------------------------------------------------
-export OPENCLAW_REPO="${OPENCLAW_REPO:-https://github.com/pjasicek/OpenClaw.git}"
-export OPENCLAW_BRANCH="${OPENCLAW_BRANCH:-master}"
+export OPENCLAW_PKG="${OPENCLAW_PKG:-openclaw@latest}"
 
-# Where the engine is cloned and built on the Mac.
-export OPENCLAW_HOME="${OPENCLAW_HOME:-${HOME}/OpenClaw}"
-export BUILD_DIR="${BUILD_DIR:-${OPENCLAW_HOME}/build}"
+# Homebrew Node formula (node@24 recommended; minimum Node 22.19).
+export NODE_FORMULA="${NODE_FORMULA:-node@24}"
 
-# Upstream CMake emits the binary + assets here (CMAKE_RUNTIME_OUTPUT_DIRECTORY=../Build_Release).
-# CLAW.REZ and ASSETS.ZIP must live in this directory; the game runs from here.
-export RELEASE_DIR="${RELEASE_DIR:-${OPENCLAW_HOME}/Build_Release}"
-export OPENCLAW_BIN="${OPENCLAW_BIN:-${RELEASE_DIR}/openclaw}"
+# Gateway listen port (local dashboard/API). 18789 is the OpenClaw default.
+export OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
 
-# Folder scanned for the original game archive (CLAW.REZ).
-export DOWNLOADS_DIR="${DOWNLOADS_DIR:-${HOME}/Downloads}"
+# Config lives in ~/.openclaw/openclaw.json. Model format: "<provider>/<model-id>".
+export OPENCLAW_DIR="${OPENCLAW_DIR:-${HOME}/.openclaw}"
+export OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-${OPENCLAW_DIR}/openclaw.json}"
 
-# Parallel build jobs (number of CPU cores on macOS).
-export MAKE_JOBS="${MAKE_JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || echo 2)}"
+# Anthropic (Claude). Adjust the exact model id per https://docs.openclaw.ai if needed.
+export OPENCLAW_MODEL="${OPENCLAW_MODEL:-anthropic/claude-sonnet-4-6}"
+
+# Your Anthropic API key. NEVER commit it — export it in your shell:
+#     export ANTHROPIC_API_KEY=sk-ant-...
+export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
