@@ -20,7 +20,8 @@ engine (a reimplementation of *Captain Claw*, 1997) on the
 | `build.sh` | Clones + compiles OpenClaw → `Build_Release/openclaw`. |
 | `organize-assets.sh` | **Organizes the download folder**: finds `CLAW.REZ`, drops it next to the binary, and packs `ASSETS.ZIP`. |
 | `clean-downloads.sh` | Removes unusable `.dmg` files (macOS images, useless on Linux) from the download folder. |
-| `run.sh` | **Activates OpenClaw**: launches it on a virtual display (Xvfb), optionally over VNC. |
+| `run.sh` | **Activates OpenClaw**: launches it on a virtual display (Xvfb), prints the VM's local IP, and serves VNC (localhost or, with `VNC_EXPOSE=1`, the VM's IP). |
+| `connect.sh` | Run **on your Mac**: opens the SSH tunnel to the VM (`VM_HOST`) and prints the `vnc://localhost:5900` URL. |
 | `install-service.sh` | Installs a `systemd` unit so the game runs on boot / restarts on failure. |
 | `setup.sh` | Runs deps → build → organize in one go (`--service`, `--run` optional). |
 
@@ -68,16 +69,39 @@ Then **activate** the game:
 ## Viewing / playing it remotely (headless VM)
 
 The VM has no monitor, so `run.sh` renders to a **virtual display** and exposes
-it over VNC **bound to localhost only**. Reach it through an SSH tunnel — do
-**not** open the VNC port in the Azure Network Security Group:
+it over VNC. When it starts, it prints the **VM's local IP** (auto-detected via
+`hostname -I`) and the exact connection command.
+
+### Option A — SSH tunnel (default, recommended, secure)
+
+VNC is **bound to localhost** and you reach it through an SSH tunnel — nothing
+is opened in the Azure Network Security Group. Set `VM_HOST` to your VM's SSH
+target and use the helper:
 
 ```bash
-# On your machine: tunnel localhost:5900 to the VM's VNC
-ssh -L 5900:localhost:5900 azureuser@<vm-ip>
+# On your Mac: set the VM address once, then open the tunnel
+export VM_HOST=azureuser@<vm-ip>      # <vm-ip> = public IP from the Azure Portal
+./deploy/connect.sh                   # opens ssh -L 5900:localhost:5900 and prints the URL
 
-# Then connect any VNC client to:
-localhost:5900
+# Then connect a VNC client to:
+vnc://localhost:5900                  # on macOS: open vnc://localhost:5900
 ```
+
+`./deploy/connect.sh --print` just prints the commands without connecting.
+
+### Option B — VNC on the VM's IP (no tunnel, less secure)
+
+To connect straight to the VM's IP without a tunnel, run the game with VNC
+exposed on the network. This **requires a password** and an **inbound rule for
+the VNC port in the Azure NSG**:
+
+```bash
+VNC_EXPOSE=1 VNC_PASSWORD='choose-a-strong-pass' ./deploy/run.sh
+# run.sh prints:  vnc://<vm-ip>:5900
+```
+
+If `VNC_EXPOSE=1` but no `VNC_PASSWORD` is set, `run.sh` refuses to expose VNC
+and falls back to localhost-only.
 
 To run purely headless (e.g. a smoke test, no viewer): `ENABLE_VNC=0 ./deploy/run.sh`.
 
@@ -124,6 +148,14 @@ OPENCLAW_HOME=/opt/openclaw DOWNLOADS_DIR=/srv/claw SCREEN_GEOMETRY=1920x1080x24
 Common knobs: `OPENCLAW_REPO` / `OPENCLAW_BRANCH`, `OPENCLAW_HOME`,
 `DOWNLOADS_DIR`, `DISPLAY_NUM`, `SCREEN_GEOMETRY`, `ENABLE_VNC`, `VNC_PORT`,
 `MAKE_JOBS`.
+
+Connection / VNC exposure knobs:
+
+| Variable | Purpose |
+| --- | --- |
+| `VM_HOST` | VM SSH target for `connect.sh`, e.g. `azureuser@20.30.40.50`. |
+| `VNC_EXPOSE` | `0` (default) = localhost only (SSH tunnel); `1` = listen on the VM's IP. |
+| `VNC_PASSWORD` | Required when `VNC_EXPOSE=1`; sets the VNC password. |
 
 ---
 
