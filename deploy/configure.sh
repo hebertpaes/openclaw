@@ -60,5 +60,16 @@ JSON
     ;;
 esac
 
+# --- GitHub connection -----------------------------------------------------
+if [ "${OPENCLAW_GITHUB}" = "1" ]; then
+  if [ -z "${GITHUB_TOKEN}" ]; then
+    log_warn "GitHub plugin enabled but GITHUB_TOKEN is not set."
+    log_warn "Create a fine-grained PAT (scopes: repo + read:org) at"
+    log_warn "https://github.com/settings/tokens and put it in secrets.env (GITHUB_TOKEN=...)."
+  else
+    log_ok "GITHUB_TOKEN present — the GitHub plugin can authenticate."
+  fi
+fi
+
 log_info "Provider/channel details (WhatsApp, Telegram, …) are completed by"
 log_info "'openclaw onboard' — see start.sh / https://docs.openclaw.ai"

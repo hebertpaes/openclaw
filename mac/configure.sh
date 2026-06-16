@@ -54,3 +54,14 @@ JSON
     die "Unknown OPENCLAW_BACKEND='${OPENCLAW_BACKEND}' (expected: codex or claude)."
     ;;
 esac
+
+# --- GitHub connection -----------------------------------------------------
+if [ "${OPENCLAW_GITHUB}" = "1" ]; then
+  if [ -z "${GITHUB_TOKEN}" ]; then
+    log_warn "GitHub plugin enabled but GITHUB_TOKEN is not set."
+    log_warn "Create a fine-grained PAT (repo + read:org) at https://github.com/settings/tokens"
+    log_warn "and put it in secrets.env (GITHUB_TOKEN=...)."
+  else
+    log_ok "GITHUB_TOKEN present — the GitHub plugin can authenticate."
+  fi
+fi

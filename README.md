@@ -59,8 +59,13 @@ carregam automaticamente e o arquivo é **gitignored**:
 
 ```bash
 cp secrets.env.example secrets.env
-# edite: OPENCLAW_BACKEND, OPENAI_API_KEY (ou ANTHROPIC_API_KEY), VM_HOST
+# edite: OPENCLAW_BACKEND, OPENAI_API_KEY (ou ANTHROPIC_API_KEY), GITHUB_TOKEN, VM_HOST
 ```
+
+Para **conectar ao GitHub**, deixe `OPENCLAW_GITHUB=1` e preencha o `GITHUB_TOKEN`
+(PAT fine-grained, escopos `repo` + `read:org`) no `secrets.env` — o `install.sh`
+adiciona o plugin do GitHub e o agente autentica pela variável de ambiente
+(nunca no `openclaw.json`).
 
 Para alterar a credencial de **login da VM** (ação no Azure, feita por você no
 Cloud Shell): `az vm user update -g openclaw-vm_group -n openclaw-vm -u azureuser

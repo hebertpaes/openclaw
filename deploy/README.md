@@ -140,6 +140,29 @@ and the [Codex backend reference](https://deepwiki.com/openclaw/openclaw/3.9-cod
 
 ---
 
+## Connecting to GitHub
+
+The agent talks to GitHub through the **GitHub plugin** (it is *not* a chat
+channel). `install.sh` adds it automatically when `OPENCLAW_GITHUB=1` (default),
+and it authenticates with a **GitHub token from the environment** — never from
+`openclaw.json`.
+
+1. Create a **fine-grained PAT** at <https://github.com/settings/tokens> with the
+   minimum scopes (`repo` + `read:org`), limited to the repos you want the agent
+   to touch.
+2. Put it in `secrets.env`:
+   ```bash
+   export OPENCLAW_GITHUB=1
+   export GITHUB_TOKEN=github_pat_...
+   ```
+3. Run `./deploy/setup.sh` (or just `./deploy/install.sh` to add the plugin).
+
+To skip GitHub, set `OPENCLAW_GITHUB=0`. If the plugin package name differs in
+your OpenClaw version, override `OPENCLAW_GITHUB_PLUGIN` (it follows the
+`@openclaw/<name>` convention) — confirm it in the OpenClaw plugin directory.
+
+---
+
 ## Step by step (if you prefer)
 
 ```bash

@@ -82,6 +82,21 @@ openclaw gateway stop
 
 ---
 
+## Connecting to GitHub
+
+`install.sh` adds the **GitHub plugin** when `OPENCLAW_GITHUB=1` (default); the
+agent authenticates with `GITHUB_TOKEN` from the environment. Create a
+fine-grained PAT (`repo` + `read:org`) at <https://github.com/settings/tokens>
+and put it in `secrets.env`:
+
+```bash
+export OPENCLAW_GITHUB=1
+export GITHUB_TOKEN=github_pat_...
+```
+
+Set `OPENCLAW_GITHUB=0` to skip. See [`../deploy/README.md`](../deploy/README.md#connecting-to-github)
+for details.
+
 ## Troubleshooting
 
 - **`Homebrew is not installed`** — install from <https://brew.sh>, then re-run.

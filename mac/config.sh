@@ -37,3 +37,9 @@ export OPENCLAW_MODEL="${OPENCLAW_MODEL:-anthropic/claude-sonnet-4-6}"
 #   Claude: export ANTHROPIC_API_KEY=sk-ant-...
 export OPENAI_API_KEY="${OPENAI_API_KEY:-}"
 export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
+
+# GitHub integration: connect the agent to GitHub via the GitHub plugin.
+export OPENCLAW_GITHUB="${OPENCLAW_GITHUB:-1}"
+export OPENCLAW_GITHUB_PLUGIN="${OPENCLAW_GITHUB_PLUGIN:-@openclaw/github}"
+# Fine-grained PAT (repo + read:org); read from env, never in openclaw.json.
+export GITHUB_TOKEN="${GITHUB_TOKEN:-}"
