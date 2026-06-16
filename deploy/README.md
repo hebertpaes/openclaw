@@ -25,6 +25,7 @@ instead.
 | `configure.sh` | Scaffolds `~/.openclaw/openclaw.json` with the Claude model (no secrets). |
 | `start.sh` | Runs `openclaw onboard --install-daemon` (systemd user service) and shows status. |
 | `connect.sh` | Run **on your Mac**: SSH-tunnels the dashboard and prints `http://localhost:18789`. |
+| `vm-ssh-setup.sh` | Run **on your Mac**: generates an SSH key and prints the exact `az vm user update` command to register it on the VM. |
 | `setup.sh` | install → configure → start, in one go. |
 
 ---
@@ -53,8 +54,19 @@ cp secrets.env.example secrets.env
 # edit secrets.env: OPENCLAW_BACKEND, OPENAI_API_KEY (or ANTHROPIC_API_KEY), VM_HOST
 ```
 
-Never commit `secrets.env`. To change the **VM login** credentials (this is an
-Azure action you run yourself, from Cloud Shell):
+Never commit `secrets.env`.
+
+### Setting up SSH login to the VM
+
+The easiest path — `vm-ssh-setup.sh` generates a key locally and prints the
+exact Azure command to register it (and saves `VM_HOST` for you):
+
+```bash
+VM_IP=<vm-ip> ./deploy/vm-ssh-setup.sh
+# then paste the printed `az vm user update ...` into Azure Cloud Shell
+```
+
+Doing it manually instead (an Azure action you run yourself, from Cloud Shell):
 
 ```bash
 # reset the admin SSH public key (or use --password to set a password)
@@ -62,7 +74,8 @@ az vm user update -g openclaw-vm_group -n openclaw-vm \
   -u azureuser --ssh-key-value "$(cat ~/.ssh/id_ed25519.pub)"
 ```
 
-…or use the VM's **Reset password** blade in the Azure Portal.
+…or use the VM's **Reset password** blade in the Azure Portal. Make sure the
+VM's NSG allows inbound TCP 22.
 
 ---
 
