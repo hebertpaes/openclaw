@@ -72,6 +72,19 @@ Cloud Shell): `az vm user update -g openclaw-vm_group -n openclaw-vm -u azureuse
 --ssh-key-value "$(cat ~/.ssh/id_ed25519.pub)"` — ou a aba **Reset password** no
 portal.
 
+## Recomeçar do zero
+
+```bash
+./deploy/uninstall.sh --purge   # (ou ./mac/uninstall.sh) remove tudo: pacote, plugins, ~/.openclaw
+./deploy/setup.sh               # instala de novo, já com Codex + GitHub
+```
+
+## Automação (CI)
+
+O repositório tem um workflow do GitHub Actions (`.github/workflows/ci.yml`) que,
+a cada push/PR, valida os scripts (`bash -n` + `shellcheck`) e garante que nenhum
+arquivo de segredo foi commitado.
+
 ## Observações
 
 - A **chave do provider** (`OPENAI_API_KEY` para Codex, `ANTHROPIC_API_KEY` para

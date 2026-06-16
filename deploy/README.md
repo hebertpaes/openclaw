@@ -27,6 +27,7 @@ instead.
 | `connect.sh` | Run **on your Mac**: SSH-tunnels the dashboard and prints `http://localhost:18789`. |
 | `vm-ssh-setup.sh` | Run **on your Mac**: generates an SSH key and prints the exact `az vm user update` command to register it on the VM. |
 | `setup.sh` | install → configure → start, in one go. |
+| `uninstall.sh` | Stop the gateway and remove the package/plugins (`--purge` also deletes `~/.openclaw`). |
 
 ---
 
@@ -170,6 +171,15 @@ your OpenClaw version, override `OPENCLAW_GITHUB_PLUGIN` (it follows the
 ./deploy/configure.sh      # ~/.openclaw/openclaw.json
 ./deploy/start.sh          # onboard + install daemon
 # or: ./deploy/start.sh --foreground   # run in the foreground for debugging
+```
+
+---
+
+## Start over (uninstall + fresh install)
+
+```bash
+./deploy/uninstall.sh --purge   # stop, remove the package/plugins, delete ~/.openclaw
+./deploy/setup.sh               # fresh install + configure + start (Codex + GitHub)
 ```
 
 ---

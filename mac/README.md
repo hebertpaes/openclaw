@@ -18,6 +18,7 @@ Works on **Apple Silicon** and **Intel**. The gateway listens on **port 18789**
 | `configure.sh` | Scaffolds `~/.openclaw/openclaw.json` with the Claude model (no secrets). |
 | `start.sh` | Runs `openclaw onboard --install-daemon` (launchd) and shows status. |
 | `setup.sh` | install → configure → start, in one go. |
+| `uninstall.sh` | Stop the gateway and remove the package/plugins (`--purge` also deletes `~/.openclaw`). |
 
 ---
 

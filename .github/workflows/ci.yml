@@ -1,0 +1,52 @@
+name: CI
+
+# Automation: validate the deploy/mac shell scripts and guard against committed
+# secrets on every push and pull request.
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Bash syntax check
+        run: |
+          for f in deploy/*.sh mac/*.sh; do
+            echo "bash -n $f"
+            bash -n "$f"
+          done
+
+      - name: ShellCheck
+        # SC1091 = "can't follow dynamically-sourced lib.sh"; expected, so excluded.
+        run: shellcheck -x -e SC1091 deploy/*.sh mac/*.sh deploy/config.env mac/config.sh
+
+  no-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure no real secrets file is committed
+        run: |
+          if git ls-files | grep -E '(^|/)secrets(\.local)?\.env$'; then
+            echo "::error::A real secrets file is committed — remove it (only secrets.env.example belongs in git)."
+            exit 1
+          fi
+          echo "OK: no secrets.env committed."
+
+      - name: Ensure the example template has no filled-in values
+        run: |
+          if grep -E '^export (OPENAI_API_KEY|ANTHROPIC_API_KEY|GITHUB_TOKEN|VM_HOST)=.+' secrets.env.example; then
+            echo "::error::secrets.env.example must keep its values blank."
+            exit 1
+          fi
+          echo "OK: template values are blank."
