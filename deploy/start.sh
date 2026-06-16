@@ -23,8 +23,12 @@ case "${1:-}" in
   *) die "Unknown option: ${1} (try --help)" ;;
 esac
 
-if [ -z "${ANTHROPIC_API_KEY}" ] && [ "${MODE}" != "status" ]; then
-  log_warn "ANTHROPIC_API_KEY is not set; 'openclaw onboard' will prompt you for credentials."
+if [ "${MODE}" != "status" ]; then
+  if [ "${OPENCLAW_BACKEND}" = "codex" ] && [ -z "${OPENAI_API_KEY}" ]; then
+    log_warn "Backend codex: OPENAI_API_KEY not set; 'openclaw onboard' will prompt (or log in with ChatGPT/Codex)."
+  elif [ "${OPENCLAW_BACKEND}" = "claude" ] && [ -z "${ANTHROPIC_API_KEY}" ]; then
+    log_warn "Backend claude: ANTHROPIC_API_KEY not set; 'openclaw onboard' will prompt you for credentials."
+  fi
 fi
 
 case "${MODE}" in

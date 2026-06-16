@@ -6,8 +6,10 @@ assistente self-hosted, <https://openclaw.ai>) na VM **`openclaw-vm`** do Azure
 **e localmente no MacBook**.
 
 O OpenClaw é um agente de IA self-hosted que conecta seus apps de mensagem a um
-agente Claude. Ele roda um processo *gateway* que escuta na porta **18789**
-(painel local em `http://localhost:18789`).
+agente de código. Ele roda um processo *gateway* que escuta na porta **18789**
+(painel local em `http://localhost:18789`). Por padrão estes scripts usam o
+backend **Codex** (Codex app-server da OpenAI, via plugin `@openclaw/codex`);
+use `OPENCLAW_BACKEND=claude` para usar o Claude (Anthropic).
 
 ## Estrutura
 
@@ -25,8 +27,9 @@ agente Claude. Ele roda um processo *gateway* que escuta na porta **18789**
 ```bash
 ssh azureuser@<ip-da-vm>
 cd ~/openclaw
-export ANTHROPIC_API_KEY=sk-ant-...   # chave do Claude (não é commitada)
+export OPENAI_API_KEY=sk-...          # backend Codex (ou login ChatGPT/Codex no onboard)
 ./deploy/setup.sh                     # instala + configura + sobe o daemon
+# Para usar Claude:  OPENCLAW_BACKEND=claude ANTHROPIC_API_KEY=sk-ant-... ./deploy/setup.sh
 ```
 
 Acesse o painel do seu Mac via túnel SSH:
@@ -44,15 +47,16 @@ Ligue/desligue a VM pelo
 ```bash
 git clone https://github.com/hebertpaes/openclaw.git
 cd openclaw && git checkout claude/vigilant-hamilton-ig74tu   # até o merge na main
-export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...          # backend Codex (ou login ChatGPT/Codex no onboard)
 ./mac/setup.sh                        # instala + configura + sobe o daemon (launchd)
 # painel: http://localhost:18789
 ```
 
 ## Observações
 
-- A **chave da Anthropic** (`ANTHROPIC_API_KEY`) é fornecida por você em runtime
-  e **nunca** é escrita no repositório nem no `openclaw.json`.
+- A **chave do provider** (`OPENAI_API_KEY` para Codex, `ANTHROPIC_API_KEY` para
+  Claude) é fornecida por você em runtime e **nunca** é escrita no repositório
+  nem no `openclaw.json`.
 - O OpenClaw é um agente autônomo (executa shell, lê/escreve arquivos). Mantenha
   o gateway em `localhost` + túnel SSH em vez de expor a porta 18789.
 - Os scripts rodam **dentro da VM/Mac**; não controlam o plano de gerenciamento

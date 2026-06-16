@@ -31,3 +31,10 @@ ${SUDO} npm install -g "${OPENCLAW_PKG}"
 
 require_cmd openclaw
 log_ok "OpenClaw installed: $(openclaw --version 2>/dev/null || echo 'version unknown')"
+
+# --- Codex backend plugin --------------------------------------------------
+if [ "${OPENCLAW_BACKEND}" = "codex" ]; then
+  log_info "Adding the Codex backend plugin (${OPENCLAW_CODEX_PLUGIN}) ..."
+  openclaw plugin add "${OPENCLAW_CODEX_PLUGIN}" \
+    || log_warn "Could not add ${OPENCLAW_CODEX_PLUGIN} automatically — add it during 'openclaw onboard' or per https://docs.openclaw.ai"
+fi

@@ -9,7 +9,10 @@ AI assistant gateway (the 🦞 self-hosted agent — <https://openclaw.ai>) on t
 > over SSH — they don't talk to the Azure control plane.
 
 The gateway is a Node app that listens on **port 18789** (the local
-dashboard/API) and bridges your chat apps to a Claude agent.
+dashboard/API) and bridges your chat apps to a coding agent. By default these
+scripts use the **Codex** backend (OpenAI's Codex app-server, via the
+`@openclaw/codex` plugin); set `OPENCLAW_BACKEND=claude` to use Anthropic/Claude
+instead.
 
 ---
 
@@ -32,8 +35,11 @@ dashboard/API) and bridges your chat apps to a Claude agent.
    make sure `openclaw-vm` is **Running** and note its public IP. *(You do this
    in the portal — the scripts can't power the VM on.)*
 2. **SSH access** (`ssh azureuser@<vm-ip>`).
-3. **An Anthropic API key** for Claude. Export it as `ANTHROPIC_API_KEY` — it is
-   never written to the repo or the config file.
+3. **Provider credentials** for the agent backend — never written to the repo or
+   config:
+   - **Codex (default):** an `OPENAI_API_KEY`, or log in with your ChatGPT/Codex
+     account during onboarding.
+   - **Claude:** an `ANTHROPIC_API_KEY` (when `OPENCLAW_BACKEND=claude`).
 
 ---
 
@@ -45,17 +51,19 @@ scp -r openclaw azureuser@<vm-ip>:~/
 ssh azureuser@<vm-ip>
 cd ~/openclaw
 
-# 2. Provide your Claude API key (used by the gateway at runtime)
-export ANTHROPIC_API_KEY=sk-ant-...
+# 2. Provide your provider key (Codex backend = OpenAI; used at runtime)
+export OPENAI_API_KEY=sk-...          # or log in via ChatGPT/Codex during onboarding
 
-# 3. Install + configure + start the daemon
+# 3. Install + configure + start the daemon (Codex backend by default)
 ./deploy/setup.sh
+# For Claude instead:  OPENCLAW_BACKEND=claude ANTHROPIC_API_KEY=sk-ant-... ./deploy/setup.sh
 ```
 
-`setup.sh` installs Node + OpenClaw, writes the config, then runs
-`openclaw onboard --install-daemon`. Onboarding is **interactive the first
-time** — it walks you through the provider/channel (WhatsApp, Telegram, …) and
-installs a systemd **user** service that survives reboots.
+`setup.sh` installs Node + OpenClaw, adds the Codex plugin, writes the config,
+then runs `openclaw onboard --install-daemon`. Onboarding is **interactive the
+first time** — it wires the Codex backend + auth, walks you through the
+provider/channel (WhatsApp, Telegram, …), and installs a systemd **user**
+service that survives reboots.
 
 Manage it afterwards:
 
@@ -83,21 +91,16 @@ export VM_HOST=azureuser@<vm-ip>     # public IP from the Azure Portal
 
 ---
 
-## Choosing the Claude model
+## Choosing the backend
 
-`configure.sh` writes `~/.openclaw/openclaw.json`:
+| Backend | How to select | Auth | Notes |
+| --- | --- | --- | --- |
+| **Codex** (default) | `OPENCLAW_BACKEND=codex` | `OPENAI_API_KEY` or ChatGPT/Codex login | `install.sh` adds the `@openclaw/codex` plugin; the Codex app-server discovers its own model. |
+| **Claude** | `OPENCLAW_BACKEND=claude` | `ANTHROPIC_API_KEY` | `configure.sh` writes `agent.model` (default `anthropic/claude-sonnet-4-6`; override with `OPENCLAW_MODEL`). |
 
-```json
-{
-  "agent": {
-    "model": "anthropic/claude-sonnet-4-6"
-  }
-}
-```
-
-Override with `OPENCLAW_MODEL=anthropic/<model-id> ./deploy/setup.sh`. Confirm
-the exact model id your OpenClaw version expects in the
-[docs](https://docs.openclaw.ai).
+The exact backend selection in `openclaw.json` is wired by `openclaw onboard`
+the first time; see the [docs](https://docs.openclaw.ai/gateway/config-agents)
+and the [Codex backend reference](https://deepwiki.com/openclaw/openclaw/3.9-codex-and-cli-backends).
 
 ---
 
@@ -124,8 +127,11 @@ the exact model id your OpenClaw version expects in the
 
 ## Troubleshooting
 
-- **`ANTHROPIC_API_KEY is not set`** — `export ANTHROPIC_API_KEY=sk-ant-...`
+- **`OPENAI_API_KEY` / `ANTHROPIC_API_KEY is not set`** — export the key for
+  your backend (`OPENAI_API_KEY` for Codex, `ANTHROPIC_API_KEY` for Claude)
   before `setup.sh`/`start.sh`, or let `openclaw onboard` prompt you.
+- **Codex plugin didn't install** — run `openclaw plugin add @openclaw/codex`
+  manually, or add it during `openclaw onboard`.
 - **`apt-get not found`** — these scripts target Debian/Ubuntu; adapt
   `install.sh` for another distro, or use the Docker install
   (<https://docs.openclaw.ai/install/docker>).

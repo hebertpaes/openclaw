@@ -14,13 +14,19 @@ export NODE_FORMULA="${NODE_FORMULA:-node@24}"
 # Gateway listen port (local dashboard/API). 18789 is the OpenClaw default.
 export OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
 
+# Agent backend: "codex" (OpenAI Codex app-server) [default] or "claude" (Anthropic).
+export OPENCLAW_BACKEND="${OPENCLAW_BACKEND:-codex}"
+export OPENCLAW_CODEX_PLUGIN="${OPENCLAW_CODEX_PLUGIN:-@openclaw/codex}"
+
 # Config lives in ~/.openclaw/openclaw.json. Model format: "<provider>/<model-id>".
 export OPENCLAW_DIR="${OPENCLAW_DIR:-${HOME}/.openclaw}"
 export OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-${OPENCLAW_DIR}/openclaw.json}"
 
-# Anthropic (Claude). Adjust the exact model id per https://docs.openclaw.ai if needed.
+# Model — mainly for the claude backend (codex discovers its own model).
 export OPENCLAW_MODEL="${OPENCLAW_MODEL:-anthropic/claude-sonnet-4-6}"
 
-# Your Anthropic API key. NEVER commit it — export it in your shell:
-#     export ANTHROPIC_API_KEY=sk-ant-...
+# Provider credentials — supply your own; NEVER commit them. Export in your shell:
+#   Codex:  export OPENAI_API_KEY=sk-...        (or log in via ChatGPT/Codex during onboard)
+#   Claude: export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY="${OPENAI_API_KEY:-}"
 export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"

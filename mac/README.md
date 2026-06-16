@@ -21,11 +21,15 @@ Works on **Apple Silicon** and **Intel**. The gateway listens on **port 18789**
 
 ---
 
+By default these scripts use the **Codex** backend (OpenAI Codex app-server, via
+the `@openclaw/codex` plugin); set `OPENCLAW_BACKEND=claude` for Anthropic/Claude.
+
 ## Prerequisites
 
 1. **Homebrew** — <https://brew.sh> (the scripts check for it).
-2. **An Anthropic API key** for Claude — exported as `ANTHROPIC_API_KEY`
-   (never written to the repo or config).
+2. **Provider credentials** (never written to the repo or config):
+   - **Codex (default):** `OPENAI_API_KEY`, or ChatGPT/Codex login during onboarding.
+   - **Claude:** `ANTHROPIC_API_KEY` (when `OPENCLAW_BACKEND=claude`).
 
 ---
 
@@ -35,14 +39,15 @@ Works on **Apple Silicon** and **Intel**. The gateway listens on **port 18789**
 git clone https://github.com/hebertpaes/openclaw.git
 cd openclaw && git checkout claude/vigilant-hamilton-ig74tu   # until merged to main
 
-export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...          # Codex backend (or log in via ChatGPT/Codex)
 ./mac/setup.sh
+# For Claude instead:  OPENCLAW_BACKEND=claude ANTHROPIC_API_KEY=sk-ant-... ./mac/setup.sh
 ```
 
-`setup.sh` installs Node + OpenClaw, writes the config, then runs
-`openclaw onboard --install-daemon`. Onboarding is **interactive the first
-time** (provider/channel setup) and installs a launchd service so the gateway
-runs in the background.
+`setup.sh` installs Node + OpenClaw, adds the Codex plugin, writes the config,
+then runs `openclaw onboard --install-daemon`. Onboarding is **interactive the
+first time** (Codex auth + provider/channel setup) and installs a launchd
+service so the gateway runs in the background.
 
 Open the dashboard at **<http://localhost:18789>**.
 
@@ -55,12 +60,14 @@ openclaw gateway stop
 
 ---
 
-## Choosing the Claude model
+## Choosing the backend
 
-`configure.sh` writes `~/.openclaw/openclaw.json` with
-`"model": "anthropic/claude-sonnet-4-6"`. Override with
-`OPENCLAW_MODEL=anthropic/<model-id> ./mac/setup.sh`; confirm the exact id in the
-[docs](https://docs.openclaw.ai).
+- **Codex** (default): `OPENCLAW_BACKEND=codex` — `install.sh` adds the
+  `@openclaw/codex` plugin; auth via `OPENAI_API_KEY` or ChatGPT/Codex login.
+  The Codex app-server discovers its own model.
+- **Claude**: `OPENCLAW_BACKEND=claude` — `configure.sh` writes `agent.model`
+  (default `anthropic/claude-sonnet-4-6`, override with `OPENCLAW_MODEL`); auth
+  via `ANTHROPIC_API_KEY`.
 
 ---
 
@@ -80,7 +87,7 @@ openclaw gateway stop
 - **`Homebrew is not installed`** — install from <https://brew.sh>, then re-run.
 - **`node` not on PATH after install** — for a versioned formula add
   `export PATH="$(brew --prefix)/opt/node@24/bin:$PATH"` to `~/.zshrc`.
-- **`ANTHROPIC_API_KEY is not set`** — export it, or let `openclaw onboard`
-  prompt you.
+- **provider key not set** — export `OPENAI_API_KEY` (Codex) or
+  `ANTHROPIC_API_KEY` (Claude), or let `openclaw onboard` prompt you.
 - **"These scripts target macOS"** — you're not on a Mac; use [`../deploy/`](../deploy/)
   for the Azure VM.

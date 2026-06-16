@@ -1,37 +1,64 @@
 #!/usr/bin/env bash
-# Scaffold the OpenClaw gateway config (~/.openclaw/openclaw.json) with the
-# chosen Claude model. Secrets are NOT written here — the Anthropic API key is
-# read from the ANTHROPIC_API_KEY environment variable at runtime.
+# Scaffold the OpenClaw gateway config (~/.openclaw/openclaw.json) for the chosen
+# agent backend. Secrets are NEVER written here — provider keys are read from the
+# environment (OPENAI_API_KEY / ANTHROPIC_API_KEY) at runtime.
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
 mkdir -p "${OPENCLAW_DIR}"
 
-if [ -f "${OPENCLAW_CONFIG}" ]; then
-  log_warn "Config already exists at ${OPENCLAW_CONFIG} — leaving it untouched."
-  log_warn "Set the model manually or delete the file to regenerate it."
-else
-  log_info "Writing ${OPENCLAW_CONFIG} (model: ${OPENCLAW_MODEL}) ..."
-  cat > "${OPENCLAW_CONFIG}" <<JSON
+case "${OPENCLAW_BACKEND}" in
+  codex)
+    # The Codex app-server (added by the @openclaw/codex plugin) handles model
+    # discovery, so we don't pin a model here. Backend selection + Codex auth
+    # are completed by 'openclaw onboard' (start.sh).
+    log_info "Backend: codex (OpenAI Codex app-server)."
+    if [ -f "${OPENCLAW_CONFIG}" ]; then
+      log_warn "Config already exists at ${OPENCLAW_CONFIG} — leaving it untouched."
+    else
+      log_info "Writing minimal ${OPENCLAW_CONFIG} ..."
+      printf '{\n}\n' > "${OPENCLAW_CONFIG}"
+      chmod 600 "${OPENCLAW_CONFIG}"
+      log_ok "Config created (backend wired by 'openclaw onboard')."
+    fi
+    if [ -z "${OPENAI_API_KEY}" ]; then
+      log_warn "OPENAI_API_KEY is not set. Either export it:"
+      log_warn "    export OPENAI_API_KEY=sk-..."
+      log_warn "or log in with your ChatGPT/Codex account during 'openclaw onboard'."
+    else
+      log_ok "OPENAI_API_KEY is present in the environment."
+    fi
+    ;;
+
+  claude)
+    log_info "Backend: claude (Anthropic)."
+    if [ -f "${OPENCLAW_CONFIG}" ]; then
+      log_warn "Config already exists at ${OPENCLAW_CONFIG} — leaving it untouched."
+    else
+      log_info "Writing ${OPENCLAW_CONFIG} (model: ${OPENCLAW_MODEL}) ..."
+      cat > "${OPENCLAW_CONFIG}" <<JSON
 {
   "agent": {
     "model": "${OPENCLAW_MODEL}"
   }
 }
 JSON
-  chmod 600 "${OPENCLAW_CONFIG}"
-  log_ok "Config created."
-fi
+      chmod 600 "${OPENCLAW_CONFIG}"
+      log_ok "Config created."
+    fi
+    if [ -z "${ANTHROPIC_API_KEY}" ]; then
+      log_warn "ANTHROPIC_API_KEY is not set. Export it before starting:"
+      log_warn "    export ANTHROPIC_API_KEY=sk-ant-..."
+      log_warn "or enter it during 'openclaw onboard'."
+    else
+      log_ok "ANTHROPIC_API_KEY is present in the environment."
+    fi
+    ;;
 
-# --- API key check ---------------------------------------------------------
-if [ -z "${ANTHROPIC_API_KEY}" ]; then
-  log_warn "ANTHROPIC_API_KEY is not set. The gateway needs it to reach Claude."
-  log_warn "Export it before starting (and before installing the daemon):"
-  log_warn "    export ANTHROPIC_API_KEY=sk-ant-..."
-  log_warn "Or run 'openclaw onboard' to enter it interactively."
-else
-  log_ok "ANTHROPIC_API_KEY is present in the environment."
-fi
+  *)
+    die "Unknown OPENCLAW_BACKEND='${OPENCLAW_BACKEND}' (expected: codex or claude)."
+    ;;
+esac
 
 log_info "Provider/channel details (WhatsApp, Telegram, …) are completed by"
 log_info "'openclaw onboard' — see start.sh / https://docs.openclaw.ai"
