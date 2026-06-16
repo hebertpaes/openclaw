@@ -184,6 +184,24 @@ your OpenClaw version, override `OPENCLAW_GITHUB_PLUGIN` (it follows the
 
 ---
 
+## Automated deploy (GitHub Actions)
+
+`.github/workflows/deploy.yml` can SSH into the VM and run `bootstrap.sh` for
+you. It is **manual** (Actions tab → *Deploy to VM* → *Run workflow*) and needs
+repo secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+| --- | --- |
+| `VM_SSH_HOST` | `azureuser@<vm-ip>` |
+| `VM_SSH_KEY` | the matching **private** key |
+| `OPENCLAW_OPENAI_API_KEY` | *(optional)* OpenAI key for Codex |
+| `OPENCLAW_GITHUB_TOKEN` | *(optional)* GitHub PAT for the plugin |
+
+It runs `setup.sh --no-start` (install + configure); the one-time interactive
+`openclaw onboard --install-daemon` is still done by you over SSH.
+
+---
+
 ## Security notes
 
 - OpenClaw is an autonomous agent that can run shell commands and read/write
