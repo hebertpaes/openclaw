@@ -52,6 +52,21 @@ export OPENAI_API_KEY=sk-...          # backend Codex (ou login ChatGPT/Codex no
 # painel: http://localhost:18789
 ```
 
+## Credenciais (`secrets.env`)
+
+Em vez de exportar chaves à mão, copie o template e preencha — os scripts
+carregam automaticamente e o arquivo é **gitignored**:
+
+```bash
+cp secrets.env.example secrets.env
+# edite: OPENCLAW_BACKEND, OPENAI_API_KEY (ou ANTHROPIC_API_KEY), VM_HOST
+```
+
+Para alterar a credencial de **login da VM** (ação no Azure, feita por você no
+Cloud Shell): `az vm user update -g openclaw-vm_group -n openclaw-vm -u azureuser
+--ssh-key-value "$(cat ~/.ssh/id_ed25519.pub)"` — ou a aba **Reset password** no
+portal.
+
 ## Observações
 
 - A **chave do provider** (`OPENAI_API_KEY` para Codex, `ANTHROPIC_API_KEY` para

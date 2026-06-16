@@ -6,6 +6,13 @@
 # Docs: https://docs.openclaw.ai  •  Repo: https://github.com/openclaw/openclaw
 # =============================================================================
 
+# Load local secrets (gitignored) if present. MAC_DIR is set by lib.sh first.
+for _sf in "${MAC_DIR:-.}/../secrets.env" "${MAC_DIR:-.}/secrets.env"; do
+  # shellcheck source=/dev/null
+  [ -f "${_sf}" ] && . "${_sf}"
+done
+unset _sf
+
 export OPENCLAW_PKG="${OPENCLAW_PKG:-openclaw@latest}"
 
 # Homebrew Node formula (node@24 recommended; minimum Node 22.19).

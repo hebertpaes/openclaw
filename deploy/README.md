@@ -43,6 +43,29 @@ instead.
 
 ---
 
+## Credentials (`secrets.env`)
+
+Instead of exporting keys by hand, copy the template and fill it in — the
+scripts load it automatically and it is **gitignored**:
+
+```bash
+cp secrets.env.example secrets.env
+# edit secrets.env: OPENCLAW_BACKEND, OPENAI_API_KEY (or ANTHROPIC_API_KEY), VM_HOST
+```
+
+Never commit `secrets.env`. To change the **VM login** credentials (this is an
+Azure action you run yourself, from Cloud Shell):
+
+```bash
+# reset the admin SSH public key (or use --password to set a password)
+az vm user update -g openclaw-vm_group -n openclaw-vm \
+  -u azureuser --ssh-key-value "$(cat ~/.ssh/id_ed25519.pub)"
+```
+
+…or use the VM's **Reset password** blade in the Azure Portal.
+
+---
+
 ## Quick start
 
 ```bash
