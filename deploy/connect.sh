@@ -21,7 +21,14 @@ if [[ -z "${VM_HOST}" ]]; then
   die "VM_HOST is not set. Set it to the VM's SSH target, e.g. VM_HOST=azureuser@<vm-ip> (find the IP in the Azure Portal)."
 fi
 
-tunnel="ssh -N -L ${OPENCLAW_PORT}:localhost:${OPENCLAW_PORT} ${VM_HOST}"
+# Use the configured key explicitly so SSH doesn't get rejected for offering
+# the wrong identity first ("Permission denied (publickey)").
+ssh_opts=""
+if [ -n "${SSH_KEY:-}" ] && [ -f "${SSH_KEY}" ]; then
+  ssh_opts="-i ${SSH_KEY} -o IdentitiesOnly=yes"
+fi
+
+tunnel="ssh ${ssh_opts} -N -L ${OPENCLAW_PORT}:localhost:${OPENCLAW_PORT} ${VM_HOST}"
 url="http://localhost:${OPENCLAW_PORT}"
 
 log_info "Tunnel target : ${VM_HOST}"

@@ -35,12 +35,17 @@ echo
 log_info "(This resets the public key for '${VM_USER}'. To set a password instead,"
 log_info " use:  az vm user update -g ${AZ_RESOURCE_GROUP} -n ${AZ_VM_NAME} -u ${VM_USER} --password '<new-pass>')"
 log_info "Also make sure the VM's NSG allows inbound TCP 22."
+echo
+log_info "IMPORTANT — confirm the admin username (the #1 cause of 'Permission denied')."
+log_info "If it isn't '${VM_USER}', re-run with VM_USER=<name>. Check it with:"
+printf '  az vm show -g %s -n %s --query "osProfile.adminUsername" -o tsv\n' \
+  "${AZ_RESOURCE_GROUP}" "${AZ_VM_NAME}"
 
 # --- 3. Connect ------------------------------------------------------------
 echo
 if [ -n "${VM_IP:-}" ]; then
-  log_info "STEP B — connect:"
-  printf '  ssh -i %s %s@%s\n' "${SSH_KEY}" "${VM_USER}" "${VM_IP}"
+  log_info "STEP B — connect (use -v to debug auth):"
+  printf '  ssh -i %s -o IdentitiesOnly=yes %s@%s\n' "${SSH_KEY}" "${VM_USER}" "${VM_IP}"
 
   # Persist VM_HOST to secrets.env for connect.sh / setup.sh convenience.
   secrets="${DEPLOY_DIR}/../secrets.env"
@@ -55,6 +60,6 @@ if [ -n "${VM_IP:-}" ]; then
   log_ok "Saved VM_HOST=${VM_USER}@${VM_IP} to secrets.env (gitignored)."
 else
   log_info "STEP B — connect (replace <vm-ip> with the Public IP from the VM Overview):"
-  printf '  ssh -i %s %s@<vm-ip>\n' "${SSH_KEY}" "${VM_USER}"
+  printf '  ssh -i %s -o IdentitiesOnly=yes %s@<vm-ip>\n' "${SSH_KEY}" "${VM_USER}"
   log_info "Tip: re-run as  VM_IP=<vm-ip> ./deploy/vm-ssh-setup.sh  to save it for connect.sh."
 fi
