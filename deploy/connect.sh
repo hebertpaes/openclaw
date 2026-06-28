@@ -22,13 +22,14 @@ if [[ -z "${VM_HOST}" ]]; then
 fi
 
 # Use the configured key explicitly so SSH doesn't get rejected for offering
-# the wrong identity first ("Permission denied (publickey)").
-ssh_opts=""
+# the wrong identity first ("Permission denied (publickey)"). Build the argv as
+# an array so paths with spaces (e.g. SSH_KEY) survive word splitting.
+ssh_args=()
 if [ -n "${SSH_KEY:-}" ] && [ -f "${SSH_KEY}" ]; then
-  ssh_opts="-i ${SSH_KEY} -o IdentitiesOnly=yes"
+  ssh_args+=("-i" "${SSH_KEY}" "-o" "IdentitiesOnly=yes")
 fi
+ssh_args+=("-N" "-L" "${OPENCLAW_PORT}:localhost:${OPENCLAW_PORT}" "${VM_HOST}")
 
-tunnel="ssh ${ssh_opts} -N -L ${OPENCLAW_PORT}:localhost:${OPENCLAW_PORT} ${VM_HOST}"
 url="http://localhost:${OPENCLAW_PORT}"
 
 log_info "Tunnel target : ${VM_HOST}"
@@ -36,11 +37,11 @@ log_info "Dashboard URL : ${url}"
 
 if [[ "${PRINT_ONLY}" -eq 1 ]]; then
   log_info "Run this to open the tunnel:"
-  printf '    %s\n' "${tunnel}"
+  printf '    ssh %s\n' "${ssh_args[*]}"
   log_info "Then open ${url} in your browser."
   exit 0
 fi
 
 require_cmd ssh
 log_info "Opening SSH tunnel (Ctrl-C to close). Then open ${url} in your browser."
-exec ${tunnel}
+exec ssh "${ssh_args[@]}"

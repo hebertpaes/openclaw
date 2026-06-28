@@ -35,6 +35,12 @@ case "${MODE}" in
   daemon)
     log_info "Onboarding and installing the gateway daemon (port ${OPENCLAW_PORT}) ..."
     openclaw onboard --install-daemon
+    # systemd --user services stop at logout unless lingering is enabled; turn it
+    # on so the gateway keeps running in the background (and starts at boot).
+    if command -v loginctl >/dev/null 2>&1; then
+      loginctl enable-linger "$(id -un)" \
+        || log_warn "Could not enable lingering automatically. Run: loginctl enable-linger $(id -un)"
+    fi
     log_info "Gateway status:"
     openclaw gateway status || true
     log_ok "Gateway daemon installed. Dashboard: http://localhost:${OPENCLAW_PORT}"

@@ -10,7 +10,7 @@ import { get, require_ } from "./config.js";
 const ADMIN_API_VERSION = get("GHOST_API_VERSION", "v5.0");
 
 function base64url(input) {
-  return Buffer.from(input).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  return Buffer.from(input).toString("base64url");
 }
 
 // Build a Ghost Admin JWT valid for 5 minutes.
@@ -26,10 +26,7 @@ function adminToken() {
   const sig = crypto
     .createHmac("sha256", Buffer.from(secret, "hex"))
     .update(data)
-    .digest("base64")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
+    .digest("base64url");
   return `${data}.${sig}`;
 }
 

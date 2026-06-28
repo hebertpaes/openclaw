@@ -50,18 +50,18 @@ if (f.help || (!f.title && !f.file)) {
   process.exit(f.help ? 0 : 1);
 }
 
-const html = f.file ? readFileSync(f.file, "utf8") : (f.html || "");
-
-const postInput = {
-  title: f.title,
-  html,
-  status: f.status || "published",
-};
-if (f.tags) postInput.tags = String(f.tags).split(",").map((t) => ({ name: t.trim() })).filter((t) => t.name);
-if (f.image) postInput.feature_image = f.image;
-if (f.excerpt) postInput.custom_excerpt = f.excerpt;
-
 try {
+  const html = f.file ? readFileSync(f.file, "utf8") : (f.html || "");
+
+  const postInput = {
+    title: f.title,
+    html,
+    status: f.status || "published",
+  };
+  if (f.tags) postInput.tags = String(f.tags).split(",").map((t) => ({ name: t.trim() })).filter((t) => t.name);
+  if (f.image) postInput.feature_image = f.image;
+  if (f.excerpt) postInput.custom_excerpt = f.excerpt;
+
   log.info(`Criando post no Ghost: "${f.title}" (${postInput.status})`);
   const created = await createPost(postInput);
   log.ok(`Ghost: post ${created.status} — ${created.url || created.id}`);
