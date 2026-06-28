@@ -1,0 +1,19 @@
+{
+  "name": "openclaw-publisher",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Publica posts no Ghost (odiapolitico.com.br) e sindicaliza para X, Facebook, Instagram e WhatsApp.",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "ocpub": "./publish.js",
+    "ocsyndicate": "./syndicate.js"
+  },
+  "scripts": {
+    "publish": "node publish.js",
+    "syndicate": "node syndicate.js",
+    "check": "node --check publish.js && node --check syndicate.js && for f in lib/*.js lib/platforms/*.js; do node --check \"$f\"; done"
+  }
+}

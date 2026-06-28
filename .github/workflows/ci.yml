@@ -37,11 +37,11 @@ jobs:
 
       - name: Ensure no real secrets file is committed
         run: |
-          if git ls-files | grep -E '(^|/)secrets(\.local)?\.env$'; then
-            echo "::error::A real secrets file is committed — remove it (only secrets.env.example belongs in git)."
+          if git ls-files | grep -E '(^|/)secrets(\.local)?\.env$|^publisher/config(\.local)?\.env$'; then
+            echo "::error::A real secrets file is committed — remove it (only the *.example templates belong in git)."
             exit 1
           fi
-          echo "OK: no secrets.env committed."
+          echo "OK: no secrets/config.env committed."
 
       - name: Ensure the example template has no filled-in values
         run: |
@@ -49,4 +49,22 @@ jobs:
             echo "::error::secrets.env.example must keep its values blank."
             exit 1
           fi
+          if grep -E '^export (GHOST_ADMIN_API_KEY|GHOST_CONTENT_API_KEY|X_API_KEY|X_API_SECRET|X_ACCESS_TOKEN|X_ACCESS_SECRET|FB_PAGE_ID|FB_PAGE_ACCESS_TOKEN|IG_USER_ID|IG_ACCESS_TOKEN|WHATSAPP_PHONE_ID|WHATSAPP_TOKEN|WHATSAPP_RECIPIENTS)=.+' publisher/config.example.env; then
+            echo "::error::publisher/config.example.env must keep its secret values blank."
+            exit 1
+          fi
           echo "OK: template values are blank."
+
+  lint-publisher:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Node syntax check
+        run: |
+          for f in publisher/*.js publisher/lib/*.js publisher/lib/platforms/*.js; do
+            echo "node --check $f"
+            node --check "$f"
+          done
