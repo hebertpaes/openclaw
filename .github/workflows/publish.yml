@@ -1,0 +1,57 @@
+name: Publish releases to Ghost
+
+# Automation: hourly, fetch new press-office releases and create Ghost posts
+# (drafts by default) with source attribution. Also runnable on demand.
+on:
+  schedule:
+    - cron: "0 * * * *" # every hour
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — fetch + build but do not post"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write # to commit the dedupe state back
+
+concurrency:
+  group: publish-ghost
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Publish
+        working-directory: publisher
+        env:
+          GHOST_ADMIN_API_URL: ${{ secrets.GHOST_ADMIN_API_URL }}
+          GHOST_ADMIN_API_KEY: ${{ secrets.GHOST_ADMIN_API_KEY }}
+          # Flip to "published" via a repo Variable to go full-auto; default draft.
+          POST_STATUS: ${{ vars.POST_STATUS || 'draft' }}
+          DRY_RUN: ${{ (github.event.inputs.dry_run == 'true') && '1' || '0' }}
+        run: |
+          if [ -z "$GHOST_ADMIN_API_URL" ] || [ -z "$GHOST_ADMIN_API_KEY" ]; then
+            echo "GHOST_ADMIN_API_URL / GHOST_ADMIN_API_KEY secrets are not set — skipping."
+            exit 0
+          fi
+          node src/index.mjs
+
+      - name: Commit dedupe state
+        run: |
+          if ! git diff --quiet -- publisher/state/published.json; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add publisher/state/published.json
+            git commit -m "chore(publisher): update dedupe state [skip ci]"
+            git push
+          else
+            echo "No new posts — state unchanged."
+          fi

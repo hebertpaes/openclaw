@@ -12,6 +12,9 @@
 secrets.env
 secrets.local.env
 
+# Keep example templates tracked even though .env.* is ignored
+!publisher/.env.example
+
 # Dependencies
 node_modules/
 vendor/
