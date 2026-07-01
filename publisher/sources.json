@@ -1,0 +1,37 @@
+{
+  "defaults": {
+    "tags": ["Notícias", "Mato Grosso"]
+  },
+  "sources": [
+    {
+      "name": "SECOM-MT — Governo de Mato Grosso",
+      "attribution": "Governo de Mato Grosso / SECOM-MT",
+      "tag": "Governo de MT",
+      "type": "rss",
+      "url": "https://www.secom.mt.gov.br/rss/noticias",
+      "enabled": true,
+      "_note": "CONFIRME a URL do feed RSS da SECOM-MT. Se não houver RSS, mude type para 'html' e ajuste url/linkPattern/bodySelector abaixo."
+    },
+    {
+      "name": "SECOM-MT (fallback HTML)",
+      "attribution": "Governo de Mato Grosso / SECOM-MT",
+      "tag": "Governo de MT",
+      "type": "html",
+      "url": "https://www.secom.mt.gov.br/noticias",
+      "linkPattern": "secom\\.mt\\.gov\\.br/.*(-|/)\\d",
+      "bodySelector": "article",
+      "maxArticles": 10,
+      "enabled": false,
+      "_note": "Ative (enabled:true) e ajuste linkPattern/bodySelector conforme o HTML real da página."
+    },
+    {
+      "name": "Prefeitura de Cuiabá",
+      "attribution": "Prefeitura de Cuiabá",
+      "tag": "Cuiabá",
+      "type": "rss",
+      "url": "https://www.cuiaba.mt.gov.br/rss",
+      "enabled": false,
+      "_note": "Exemplo de prefeitura. Confirme a URL do feed e ative."
+    }
+  ]
+}
