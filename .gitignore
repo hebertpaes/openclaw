@@ -8,6 +8,13 @@
 .env
 .env.*
 
+# Local secrets (provider API keys, VM host) — never commit these
+secrets.env
+secrets.local.env
+# Publisher credentials (Ghost + social API keys) — never commit these
+publisher/config.env
+publisher/config.local.env
+
 # Dependencies
 node_modules/
 vendor/

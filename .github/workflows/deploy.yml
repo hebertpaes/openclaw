@@ -1,0 +1,55 @@
+name: Deploy to VM
+
+# Manual automation: SSH into the Azure VM and (re)install the OpenClaw gateway
+# by running deploy/bootstrap.sh there. Runs only when you click "Run workflow"
+# and requires repo secrets, so it never fires on its own.
+#
+# Required repo secrets (Settings -> Secrets and variables -> Actions):
+#   VM_SSH_HOST   ssh target, e.g. azureuser@20.30.40.50
+#   VM_SSH_KEY    the matching SSH *private* key
+# Optional:
+#   OPENCLAW_OPENAI_API_KEY   passed as OPENAI_API_KEY (Codex backend)
+#   OPENCLAW_GITHUB_TOKEN     passed as GITHUB_TOKEN (GitHub plugin)
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch/ref to deploy on the VM
+        default: claude/vigilant-hamilton-ig74tu
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required secrets
+        env:
+          VM_SSH_HOST: ${{ secrets.VM_SSH_HOST }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          if [ -z "$VM_SSH_HOST" ] || [ -z "$VM_SSH_KEY" ]; then
+            echo "::error::Set repo secrets VM_SSH_HOST (user@ip) and VM_SSH_KEY (private key) first."
+            exit 1
+          fi
+
+      - name: Deploy over SSH (install + configure, no interactive onboard)
+        env:
+          VM_SSH_HOST: ${{ secrets.VM_SSH_HOST }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENCLAW_OPENAI_API_KEY }}
+          GH_TOKEN: ${{ secrets.OPENCLAW_GITHUB_TOKEN }}
+          REF: ${{ inputs.ref }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$VM_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          # Pipe bootstrap.sh to the VM; it clones/updates the repo there and runs
+          # setup.sh --no-start (onboard stays a manual one-time step).
+          ssh -i ~/.ssh/id_deploy -o StrictHostKeyChecking=accept-new "$VM_SSH_HOST" \
+            "REPO_BRANCH='$REF' OPENAI_API_KEY='$OPENAI_API_KEY' GITHUB_TOKEN='$GH_TOKEN' bash -s -- --no-start" \
+            < deploy/bootstrap.sh
+          echo "Deployed. Finish with a one-time 'openclaw onboard --install-daemon' over SSH."
