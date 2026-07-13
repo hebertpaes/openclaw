@@ -8,8 +8,9 @@ import * as x from "./platforms/x.js";
 import * as facebook from "./platforms/facebook.js";
 import * as instagram from "./platforms/instagram.js";
 import * as whatsapp from "./platforms/whatsapp.js";
+import * as telegram from "./platforms/telegram.js";
 
-const ALL = { x, facebook, instagram, whatsapp };
+const ALL = { x, facebook, instagram, whatsapp, telegram };
 
 // A platform runs when: not globally disabled (PLATFORM_<NAME>=0 to opt out)
 // AND it has the credentials it needs.

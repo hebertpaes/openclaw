@@ -44,6 +44,7 @@ No Ghost Admin → **Settings → Integrations → Add custom integration**. Cop
 | **Facebook** | `FB_PAGE_ID`, `FB_PAGE_ACCESS_TOKEN` | Page token longo com `pages_manage_posts` |
 | **Instagram** | `IG_USER_ID`, `IG_ACCESS_TOKEN` | Conta Business ligada à Page (requer imagem no post) |
 | **WhatsApp** | `WHATSAPP_PHONE_ID`, `WHATSAPP_TOKEN`, `WHATSAPP_RECIPIENTS` | [WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api) |
+| **Telegram** | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Bot via [@BotFather](https://t.me/BotFather), admin do canal/grupo |
 
 Desligue uma plataforma com `PLATFORM_X=0` (etc.) mesmo com as chaves presentes.
 Plataformas sem credenciais são **puladas** automaticamente.
@@ -71,6 +72,25 @@ node publisher/publish.js --title "Rascunho" --html "<p>...</p>" --status draft
 `--dry-run` mostra exatamente o que seria enviado a cada rede sem chamar as APIs
 — use sempre antes do primeiro envio real.
 
+## Automático — webhook do Ghost
+
+Em vez de rodar `syndicate.js` na mão, deixe o servidor de webhook ouvindo: toda
+vez que um post é **publicado** no Ghost, ele sindicaliza sozinho.
+
+```bash
+node publisher/webhook.js      # ouve em :3333 /webhook/ghost (deixe rodando)
+```
+
+No **Ghost Admin → Settings → Integrations →** (sua integração) **→ Add webhook**:
+
+- **Event**: `Post published`
+- **Target URL**: `https://SEU_HOST/webhook/ghost` (coloque um proxy TLS na frente)
+- **Secret**: defina um valor e repita em `GHOST_WEBHOOK_SECRET` — o servidor
+  valida o header `X-Ghost-Signature` e rejeita requisições sem assinatura válida.
+
+`GET /health` responde `{ "ok": true }` para health checks. Suba o processo com
+systemd/pm2 para mantê-lo no ar.
+
 ## Notas de conformidade (importante)
 
 - **WhatsApp**: a Cloud API só entrega para quem deu **opt-in**. Fora da janela
@@ -84,6 +104,6 @@ node publisher/publish.js --title "Rascunho" --html "<p>...</p>" --status draft
 
 ## Próximos passos sugeridos
 
-- Webhook do Ghost (`post.published`) → dispara `syndicate.js` automaticamente.
-- Agendamento (cron/GitHub Actions) para o "último post".
-- Telegram, Bluesky, LinkedIn como novos adaptadores em `lib/platforms/`.
+- Agendamento (cron/GitHub Actions) para reprocessar o "último post".
+- Bluesky e LinkedIn como novos adaptadores em `lib/platforms/`.
+- Concorrência limitada (lotes) no WhatsApp para listas grandes.

@@ -49,7 +49,7 @@ jobs:
             echo "::error::secrets.env.example must keep its values blank."
             exit 1
           fi
-          if grep -E '^export (GHOST_ADMIN_API_KEY|GHOST_CONTENT_API_KEY|X_API_KEY|X_API_SECRET|X_ACCESS_TOKEN|X_ACCESS_SECRET|FB_PAGE_ID|FB_PAGE_ACCESS_TOKEN|IG_USER_ID|IG_ACCESS_TOKEN|WHATSAPP_PHONE_ID|WHATSAPP_TOKEN|WHATSAPP_RECIPIENTS)=.+' publisher/config.example.env; then
+          if grep -E '^export (GHOST_ADMIN_API_KEY|GHOST_CONTENT_API_KEY|X_API_KEY|X_API_SECRET|X_ACCESS_TOKEN|X_ACCESS_SECRET|FB_PAGE_ID|FB_PAGE_ACCESS_TOKEN|IG_USER_ID|IG_ACCESS_TOKEN|WHATSAPP_PHONE_ID|WHATSAPP_TOKEN|WHATSAPP_RECIPIENTS|TELEGRAM_BOT_TOKEN|TELEGRAM_CHAT_ID|GHOST_WEBHOOK_SECRET)=.+' publisher/config.example.env; then
             echo "::error::publisher/config.example.env must keep its secret values blank."
             exit 1
           fi

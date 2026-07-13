@@ -9,11 +9,13 @@
   },
   "bin": {
     "ocpub": "./publish.js",
-    "ocsyndicate": "./syndicate.js"
+    "ocsyndicate": "./syndicate.js",
+    "ocwebhook": "./webhook.js"
   },
   "scripts": {
     "publish": "node publish.js",
     "syndicate": "node syndicate.js",
-    "check": "node --check publish.js && node --check syndicate.js && for f in lib/*.js lib/platforms/*.js; do node --check \"$f\"; done"
+    "webhook": "node webhook.js",
+    "check": "for f in *.js lib/*.js lib/platforms/*.js; do node --check \"$f\"; done"
   }
 }

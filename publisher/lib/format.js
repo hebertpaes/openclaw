@@ -71,6 +71,7 @@ export function buildMessages(post) {
     x: xText,
     facebook: longBody,
     whatsapp: longBody,
+    telegram: longBody,
     instagram: igCaption,
   };
 }
